@@ -7,9 +7,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 
+/**
+ * Dispatcher.Default: The default CoroutineDispatcher that is used by all standard builders like launch, async,
+ *      etc if neither a dispatcher nor any other ContinuationInterceptor is specified in their context.
+ * Dispatcher.IO: The CoroutineDispatcher that is designed for offloading blocking IO tasks to a shared pool of threads.
+ * Dispatcher.Main: A coroutine dispatcher that is confined to the Main thread operating with UI objects.
+ *      Usually such dispatchers are single-threaded.
+ * Dispatcher.Unconfined: A coroutine dispatcher that is not confined to any specific thread. It executes the initial
+ *      continuation of a coroutine in the current call-frame and lets the coroutine resume in whatever thread that is
+ *      used by the corresponding suspending function, without mandating any specific threading policy.
+ *      Nested coroutines launched in this dispatcher form an event-loop to avoid stack overflows.
+ */
+
+// turned on to show flows
 @UseExperimental(InternalCoroutinesApi::class)
 fun main() {
-    GlobalScope.launch {
+    GlobalScope.launch(Dispatchers.Default) {
         // launch a new coroutine in background and continue
         delay(1000L) // non-blocking delay for 1 second (default time unit is ms)
         println("World!") // print after delay
@@ -41,15 +54,15 @@ fun main() {
 //        }
 //    }
 //
-//    // dot dash async
-//    GlobalScope.async {
+//    // dot dash async, Unconfined dispatcher don't lock this behavior to any specific thread
+//    GlobalScope.async(Dispatchers.Unconfined) {
 //        repeat(100_000) {
 //            // launch a lot of coroutines
 //            launch {
 //                delay(1000L)
 //                print(".")
-//                // this async is a child of the launch and launch will not end until it's child is complete
-//                launch { dash() }
+//                // this launch is a child of the launch and launch will not end until it's child is complete
+//                async { dash() }
 //            }
 //        }
 //    }
@@ -100,7 +113,7 @@ fun main() {
 
     runBlocking {
         val startTime = System.currentTimeMillis()
-        val job = launch(Dispatchers.Default) {
+        val job = launch(Dispatchers.IO) {
             var nextPrintTime = startTime
             var i = 0
             while (isActive) { // cancellable computation loop
